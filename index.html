@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>WMS Client</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://static.icos-cp.eu/constant/ol/3.5.0/css/ol.css" type="text/css">
+    <link rel="stylesheet" href="https://static.icos-cp.eu/constant/bootstrap/3.3.4/css/bootstrap.min.css" type="text/css">
+
+    <script type="text/javascript" src="https://static.icos-cp.eu/constant/jquery/1.11.2/jquery.min.js"></script>
+    <script type="text/javascript" src="https://static.icos-cp.eu/constant/ol/3.5.0/js/ol.min.js"></script>
+	<script type="text/javascript" src="https://static.icos-cp.eu/constant/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="script/get_capabilities.js"></script>
+    <script type="text/javascript" src="script/init.js"></script>
+    <script type="text/javascript" src="script/utils.js"></script>
+
+
+    <style type="text/css">
+        #map {
+            border: solid black 1px;
+            width: 566px;
+        }
+
+		.custom-mouse-position{
+			position: relative;
+			top: -20px;
+		}
+
+		label.above{
+			display: block;
+			margin: 0px;
+		}
+
+		label.above + select{
+			margin-bottom: 10px;
+		}
+
+		input[type=checkbox] + label.right{
+			vertical-align: middle;
+		}
+
+		div.right-align{
+			float: right;
+		}
+
+		#swipe{
+			margin-top: 2px;
+		}
+
+		#messages{
+			margin-bottom: 50px;
+		}
+
+		div.error{
+			font-weight: bold;
+			color: red;
+		}
+    </style>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+			var $services = $("#servicesDdl");
+
+			$services.change(function () {
+				init($services.val());
+			});
+
+			init($services.val());
+        });
+    </script>
+</head>
+
+<body>
+<div class="container">
+
+	<div class="row">
+		<div class="col-xs-12">
+			<h3 id="serviceTitle"></h3>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+			<label for="servicesDdl" class="above">Service</label>
+			<select id="servicesDdl">
+				<option value="/thredds/wms/carbtrack/CTE2014/yearly_1x1_fluxes.nc">Yearly fluxes</option>
+				<option value="/thredds/wms/common/CO2_EUROPE_LSCE.nc">CO2_EUROPE_LSCE</option>
+			</select>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+			<label for="layers" class="above">Layer/Variable</label>
+			<select id="layers"></select>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-2">
+			<label for="styles" class="above">Style</label>
+			<select id="styles"></select>
+		</div>
+		<div id="dateContainer" class="col-xs-2">
+			<label for="dates" class="above">Date</label>
+			<select id="dates"></select>
+		</div>
+		<div id="elevationContainer" class="col-xs-2">
+			<label for="elevations" class="above">Elevation</label>
+			<select id="elevations"></select>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-3">
+			<input type="checkbox" id="showBorders">
+			<label for="showBorders" class="right">Show country borders</label>
+		</div>
+		<div class="col-xs-4">
+			<input type="checkbox" id="useMinMax">
+			<label for="useMinMax" class="right">Use Min and Max values in request</label>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-6">
+			<div id="map"></div>
+		</div>
+		<div class="col-xs-2">
+			<img id="legend" src="" alt="Legend">
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-6">
+			<input id="swipe" type="range">
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-3">
+			<div id="mouse-position">&nbsp;</div>
+		</div>
+		<div class="col-xs-3">
+			<div id="info" class="right-align">&nbsp;</div>
+		</div>
+		<div class="col-xs-6">
+			<div id="empty">&nbsp;</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-8">
+			<div id="messages"></div>
+		</div>
+	</div>
+
+</div>
+
+</body>
+</html>
