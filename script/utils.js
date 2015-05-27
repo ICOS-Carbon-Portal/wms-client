@@ -1,12 +1,26 @@
 function setLegendSrc(style, layerMinMax) {
+	if (layerMinMax != "default"){
+		//Reduce min max to 3 significant numbers for the legend
+		var precision = 3;
+		var tmp = layerMinMax.split(",");
+		var min = Number(parseFloat(tmp[0]).toPrecision(precision));
+		var max = Number(parseFloat(tmp[1]).toPrecision(precision));
+		layerMinMax = min + "," + max;
+	}
 	$("#legend").attr("src", style.legend + "&TRANSPARENT=false&COLORSCALERANGE=" + layerMinMax + "&NUMCOLORBANDS=254");
 }
 
-function getMinMaxUrl(url, capabilities) {
+function getMinMaxUrl(url, capabilities, mapWidth, mapHeight) {
+	if(mapWidth == null|| mapHeight == null) {
+		mapWidth = $("#map").css("width").replace("px", "");
+		mapHeight = $("#map").css("height").replace("px", "");
+	}
 	var minMaxUrl = url + "?item=minmax&layers=" + capabilities.getActiveLayer().name;
+	minMaxUrl += "&width=" + mapWidth + "&height=" + mapHeight;
 	minMaxUrl += "&bbox=" + capabilities.getActiveLayer().bBox4326Str;
 	minMaxUrl += "&elevation=" + (capabilities.getActiveElevation() || "0");
-	minMaxUrl += "&time=" + capabilities.getActiveDate() + "&srs=EPSG:4326&width=50&height=50&request=GetMetadata";
+	minMaxUrl += "&time=" + capabilities.getActiveDate() + "&srs=EPSG:4326";
+	minMaxUrl += "&request=GetMetadata";
 
 	return minMaxUrl;
 }
@@ -21,12 +35,13 @@ function getMinMaxFromServer(url) {
 		var minMax = "auto";
 
 		$.each(result, function (key, val) {
-			minMaxArr.push(val);
+			minMaxArr.push(parseFloat(val));
 		});
 
 		if (minMaxArr.length > 0) {
 			minMax = minMaxArr.join(",");
 		}
+
 		return minMax;
 	}, function () {
 		return new Error("Error: Could not retrieve min and max values for this layer.");
@@ -66,14 +81,8 @@ function getZoomLevel(width) {
 	}
 }
 
-function setExtent(bBox, map) {
+function setExtent(bBox, map, layerName) {
 	//fitExtent is experimetal in version 3.5.0
-	//addMessage("setExtent: " + bBox + " (bBox)");
-	//var extent = ol.extent.applyTransform([-179.5, -80, 179.5, 80], ol.proj.getTransform("EPSG:4326", "EPSG:3857"));
-	//var extent = ol.extent.applyTransform([-15, 35, 35, 70], ol.proj.getTransform("EPSG:4326", "EPSG:3857"));
-	//addMessage("setExtent: " + extent + " (extent)");
-
-	//map.getView().fitExtent(ol.extent.applyTransform([0, 50, 20, 50], ol.proj.getTransform("EPSG:4326", "EPSG:3857")), map.getSize());
 	map.getView().fitExtent(bBox, map.getSize());
 }
 
@@ -98,5 +107,50 @@ function addMessage(msg, isErrorMsg) {
 		$("#messages").append($errorMsg);
 	} else {
 		$("#messages").append("<div>" + msg + "</div>");
+	}
+}
+
+function reverseDate(){
+	var dates = document.getElementById("dates");
+
+	if (dates.selectedIndex > 0){
+		dates.selectedIndex = dates.selectedIndex - 1;
+		$(dates).trigger("change");
+		//addMessage(dates.options[dates.selectedIndex].value);
+	}
+}
+
+function forwardDate(){
+	var dates = document.getElementById("dates");
+
+	if (dates.selectedIndex < dates.options.length - 1){
+		dates.selectedIndex = dates.selectedIndex + 1;
+		$(dates).trigger("change");
+	}
+}
+
+function playDate(btn){
+	var dates = document.getElementById("dates");
+	var $playDate = $("#datePlay");
+
+	if (btn != null) {
+		if ($playDate.val() == "off") {
+			$playDate.val("on");
+			$playDate.html("&#9724;");
+		} else {
+			$playDate.val("off");
+			$playDate.html("&#9658;");
+		}
+	}
+
+	if($playDate.val() == "on") {
+		if (dates.selectedIndex < dates.options.length - 1) {
+			dates.selectedIndex = dates.selectedIndex + 1;
+			$(dates).trigger("change");
+			//addMessage("Selected index: " + dates.selectedIndex);
+		} else {
+			$playDate.val("off");
+			$playDate.html("&#9658;");
+		}
 	}
 }

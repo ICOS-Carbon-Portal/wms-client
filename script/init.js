@@ -1,60 +1,60 @@
 function init(url) {
-    //Url for WMS getMap requests
-    var getCapabilitiesURL = url + "?service=WMS&version=1.3.0&request=GetCapabilities";
+	//Url for WMS getMap requests
+	var getCapabilitiesURL = url + "?service=WMS&version=1.3.0&request=GetCapabilities";
 
-    if (window.location.host == "localhost"){
-        getCapabilitiesURL = rewriteUrlForLocalhost(getCapabilitiesURL);
-    }
+	if (window.location.host == "localhost") {
+		getCapabilitiesURL = rewriteUrlForLocalhost(getCapabilitiesURL);
+	}
 
 	//Request capabilities
-    var capabilitiesPromise = getCapabilities(getCapabilitiesURL);
+	var capabilitiesPromise = getCapabilities(getCapabilitiesURL);
 
-    //Control for swiping layer
-    var $swipe = $("#swipe");
-    $swipe.val(0);
-    $swipe.css("width", $("#map").css("width"));
+	//Control for swiping layer
+	var $swipe = $("#swipe");
+	$swipe.val(0);
+	$swipe.css("width", $("#map").css("width"));
 
-    //Clear the map from old content
-    $("#map").children().remove();
-    $(".custom-mouse-position").remove();
-    $("#messages").children().remove();
+	//Clear the map from old content
+	$("#map").children().remove();
+	$(".custom-mouse-position").remove();
+	$("#messages").children().remove();
 
-    capabilitiesPromise.done(function (capabilities) {
+	capabilitiesPromise.done(function (capabilities) {
 		//Capabilities has come from the server
 		$("#serviceTitle").html(capabilities.serviceTitle);
 		$("title").html(capabilities.serviceTitle);
 
-        var minMaxUrl = getMinMaxUrl(url, capabilities);
+		//Find out what the map height should be
+		var mapWidth = $("#map").css("width").replace("px", "");
+		var mapHeight = calculateMapDivHeight(
+			mapWidth,
+			capabilities.getActiveLayer().width3857,
+			capabilities.getActiveLayer().height3857);
+
+		var minMaxUrl = getMinMaxUrl(url, capabilities, mapWidth, mapHeight);
 
 		//Request min and max values from server
-        var minMaxPromise = getMinMaxFromServer(minMaxUrl);
+		var minMaxPromise = getMinMaxFromServer(minMaxUrl);
 
-        minMaxPromise.done(function (minMax) {
+		minMaxPromise.done(function (minMax) {
 			//Min and max values has come from the server
 			capabilities.setMinMax(minMax);
-            main(url, capabilities);
-        });
+			main(url, capabilities, mapWidth, mapHeight);
+		});
 
-        minMaxPromise.fail(function (error) {
+		minMaxPromise.fail(function (err) {
 			//Min and max values could not be fetched from server. Fall back on "auto".
 			addMessage(err.message, true);
 			capabilities.setMinMax("auto");
-			main(url, capabilities);
-        });
-    }).fail(function(err){
+			main(url, capabilities, mapWidth, mapHeight);
+		});
+	}).fail(function (err) {
 		addMessage(err.message, true);
 	});
 }
 
-function main(url, capabilities){
+function main(url, capabilities, mapWidth, mapHeight) {
 	var $mapDiv = $("#map");
-
-	//Find out what the map height should be
-	var mapWidth = $mapDiv.css("width").replace("px", "");
-	var mapHeight = calculateMapDivHeight(
-		mapWidth,
-		capabilities.getActiveLayer().width3857,
-		capabilities.getActiveLayer().height3857);
 	$mapDiv.css("height", mapHeight + "px");
 
 	//Layer 0
@@ -64,23 +64,30 @@ function main(url, capabilities){
 	});
 
 	//Layer 1
+	var threddsSource = new ol.source.ImageWMS({
+		url: url,
+		params: {
+			'LAYERS': capabilities.getActiveLayer().name,
+			'ELEVATION': capabilities.getActiveElevation(),
+			'TIME': capabilities.getActiveDate(),
+			'TRANSPARENT': 'true',
+			'STYLES': capabilities.getActiveStyle().name,
+			'COLORSCALERANGE': capabilities.getMinMax(),
+			'NUMCOLORBANDS': 254,
+			'LOGSCALE': 'false',
+			'WIDTH': mapWidth,
+			'HEIGHT': mapHeight
+		}
+	});
+	threddsSource.on('imageloadend', function(event) {
+		if ($("#datePlay").val() == "on")
+		setTimeout(function(){
+			playDate();
+		}, 1000);
+	});
 	var thredds = new ol.layer.Image({
 		visible: true,
-		source: new ol.source.ImageWMS({
-			url: url,
-			params: {
-				'LAYERS': capabilities.getActiveLayer().name,
-				'ELEVATION': capabilities.getActiveElevation(),
-				'TIME': capabilities.getActiveDate(),
-				'TRANSPARENT': 'true',
-				'STYLES': capabilities.getActiveStyle().name,
-				'COLORSCALERANGE': capabilities.getMinMax(),
-				'NUMCOLORBANDS': 254,
-				'LOGSCALE': 'false',
-				'WIDTH': mapWidth,
-				'HEIGHT': mapHeight
-			}
-		})
+		source: threddsSource
 	});
 
 	//Layer 2
@@ -109,7 +116,7 @@ function main(url, capabilities){
 		//})
 	});
 
-	setExtent(capabilities.getActiveLayer().bBox3857Arr, map);
+	setExtent(capabilities.getActiveLayer().bBox3857Arr, map, capabilities.getActiveLayer().name);
 
 	addControls(map, capabilities);
 
@@ -123,11 +130,10 @@ function main(url, capabilities){
 	var legendMinMax = (capabilities.getMinMax() == "auto" ? "default" : capabilities.getMinMax());
 	setLegendSrc(capabilities.getActiveStyle(), legendMinMax);
 
-	fillDropDowns(map, capabilities, url);
-
+	fillDropDowns(map, capabilities, url, mapWidth, mapHeight);
 }
 
-function addControls(map, capabilities){
+function addControls(map, capabilities) {
 	map.addControl(
 		new ol.control.ZoomToExtent({
 			label: "F",
@@ -149,7 +155,7 @@ function addControls(map, capabilities){
 	);
 }
 
-function addMapSwipe(map){
+function addMapSwipe(map) {
 	var swipe = document.getElementById('swipe');
 
 	var thredds = map.getLayers().item(1);
@@ -189,7 +195,7 @@ function addMapSwipe(map){
 	}, false);
 }
 
-function addCountryBorderHighlight(map){
+function addCountryBorderHighlight(map) {
 	var featureOverlay = new ol.FeatureOverlay({
 		map: map,
 		style: new ol.style.Style({
@@ -251,31 +257,34 @@ function addCountryBorderHighlight(map){
 	});
 }
 
-function addMinMaxSwitch(map, capabilities, minMax){
+function addMinMaxSwitch(map, capabilities, minMax) {
 	var $useMinMax = $("#useMinMax");
+	$useMinMax.off("click");
 	$useMinMax.prop('checked', true);
 	$useMinMax.click(function () {
 		var params = map.getLayers().item(1).getSource().getParams();
+		var legendMinMax = "default";
 
 		if ($useMinMax.is(':checked')) {
 			params.COLORSCALERANGE = minMax;
+			legendMinMax = (minMax == "auto" ? "default" : minMax);
 		} else {
 			params.COLORSCALERANGE = 'auto';
 		}
 
 		map.getLayers().item(1).getSource().updateParams(params);
-		setLegendSrc(capabilities.getActiveStyle(), (minMax == "auto" ? "default" : minMax));
+		setLegendSrc(capabilities.getActiveStyle(), legendMinMax);
 	});
 }
 
-function fillDropDowns(map, capabilities, url){
-	initDropDown("layers", map, capabilities, url);
-	initDropDown("styles", map, capabilities, url);
-	initDropDown("elevations", map, capabilities, url);
-	initDropDown("dates", map, capabilities, url);
+function fillDropDowns(map, capabilities, url, mapWidth, mapHeight) {
+	initDropDown("layers", map, capabilities, url, mapWidth, mapHeight);
+	initDropDown("styles", map, capabilities, url, mapWidth, mapHeight);
+	initDropDown("elevations", map, capabilities, url, mapWidth, mapHeight);
+	initDropDown("dates", map, capabilities, url, mapWidth, mapHeight);
 }
 
-function initDropDown(id, map, capabilities, url) {
+function initDropDown(id, map, capabilities, url, mapWidth, mapHeight) {
 	var $ddl = $("#" + id);
 
 	//Remove old content
@@ -283,11 +292,12 @@ function initDropDown(id, map, capabilities, url) {
 
 	switch (id) {
 		case "layers":
-			capabilities.layers.forEach(function (item){
+			capabilities.layers.forEach(function (item) {
 				$ddl.append($("<option />").val(item.name).text(item.name + "  - " + item.abstract));
 			});
 
 			$ddl.prop("selectedIndex", capabilities.getActiveLayerIndex());
+			stepDates();
 
 			break;
 		case "styles":
@@ -299,10 +309,11 @@ function initDropDown(id, map, capabilities, url) {
 
 			break;
 		case "elevations":
-			if (capabilities.getActiveLayer().elevations.length > 1) {
+			if (capabilities.hasElevations()) {
 				$("#elevationContainer").show();
+				$("#elevationUnit").html(capabilities.getActiveLayer().elevationUnit);
 
-				capabilities.getActiveLayer().elevations.forEach(function (item) {
+				capabilities.getActiveElevations().forEach(function (item) {
 					$ddl.append($("<option />").val(item).text(item));
 				});
 
@@ -333,89 +344,118 @@ function initDropDown(id, map, capabilities, url) {
 
 	//Add new event
 	$ddl.change(function () {
-		ddlChange($ddl, map, capabilities, url);
+		ddlChange($ddl, map, capabilities, url, mapWidth, mapHeight);
 	});
 }
 
-function ddlChange($ddl, map, capabilities, url) {
+function ddlChange($ddl, map, capabilities, url, mapWidth, mapHeight) {
 	//The WMS layer is always at index 1
-    var params = map.getLayers().item(1).getSource().getParams();
+	var params = map.getLayers().item(1).getSource().getParams();
 
 	var minMaxPromise = null;
 
-    switch ($ddl.prop('id')) {
-        case "layers":
-            capabilities.setActiveLayer($ddl[0].selectedIndex);
+	switch ($ddl.prop('id')) {
+		case "layers":
+			capabilities.setActiveLayer($ddl[0].selectedIndex);
 
-			//capabilities.layers.forEach(function(layer){
-			//	addMessage(layer.name);
-			//});
-
-			if (capabilities.getMinMax() == null){
-				var minMaxUrl = getMinMaxUrl(url, capabilities);
+			if (capabilities.getMinMax() == null) {
+				var minMaxUrl = getMinMaxUrl(url, capabilities, mapWidth, mapHeight);
 				minMaxPromise = getMinMaxFromServer(minMaxUrl);
-			} else {
-				var legendMinMax = (capabilities.getMinMax() == "auto" ? "default" : capabilities.getMinMax());
-
-				//Update legend
-				setLegendSrc(capabilities.getActiveStyle(), legendMinMax);
 			}
 
-            params.LAYERS = capabilities.getActiveLayer().name;
+			params.LAYERS = capabilities.getActiveLayer().name;
 
-            //Update drop downs
+			//Update drop downs
 			initDropDown("styles", map, capabilities, url);
 			initDropDown("elevations", map, capabilities, url);
 			initDropDown("dates", map, capabilities, url);
 
-            break;
-        case "styles":
-            capabilities.setActiveStyle($ddl[0].selectedIndex);
+			stepDates();
 
-            params.STYLES = $ddl.val();
+			break;
+		case "styles":
+			capabilities.setActiveStyle($ddl[0].selectedIndex);
+
+			params.STYLES = $ddl.val();
+
+			break;
+		case "elevations":
+			capabilities.setActiveElevation($ddl[0].selectedIndex);
 
 			if (capabilities.getMinMax() == null) {
-				var minMaxUrl = getMinMaxUrl(url, capabilities);
+				var minMaxUrl = getMinMaxUrl(url, capabilities, mapWidth, mapHeight);
 				minMaxPromise = getMinMaxFromServer(minMaxUrl);
-			} else {
-				var legendMinMax = (capabilities.getMinMax() == "auto" ? "default" : capabilities.getMinMax());
-
-				//Update legend
-				setLegendSrc(capabilities.getActiveStyle(), legendMinMax);
 			}
 
-            break;
-        case "elevations":
-            capabilities.setActiveStyle($ddl[0].selectedIndex);
-            params.ELEVATION = $ddl.val();
+			params.ELEVATION = $ddl.val();
 
-            break;
-        case "dates":
-            capabilities.setActiveDate($ddl[0].selectedIndex);
-            params.TIME = $ddl.val();
+			break;
+		case "dates":
+			capabilities.setActiveDate($ddl[0].selectedIndex);
 
-            break;
-    }
+			if (capabilities.getMinMax() == null) {
+				var minMaxUrl = getMinMaxUrl(url, capabilities, mapWidth, mapHeight);
+				minMaxPromise = getMinMaxFromServer(minMaxUrl);
+			}
 
-    map.getLayers().item(1).getSource().updateParams(params);
+			params.TIME = $ddl.val();
 
-	if (minMaxPromise != null){
+			break;
+	}
+
+	if (minMaxPromise != null) {
 		minMaxPromise.done(function (minMax) {
 			//Min and max values has come from the server
 			capabilities.setMinMax(minMax);
-			var legendMinMax = (minMax == "auto" ? "default" : minMax);
+
+			params.COLORSCALERANGE = capabilities.getMinMax();
+			map.getLayers().item(1).getSource().updateParams(params);
 
 			//Update legend
+			var legendMinMax = (capabilities.getMinMax() == "auto" ? "default" : capabilities.getMinMax());
 			setLegendSrc(capabilities.getActiveStyle(), legendMinMax);
 		});
 
 		minMaxPromise.fail(function () {
 			//Min and max values could not be fetched from server. Fall back on "auto".
 			capabilities.setMinMax("auto");
-			var legendMinMax = "default";
+
+			params.COLORSCALERANGE = capabilities.getMinMax();
+			map.getLayers().item(1).getSource().updateParams(params);
 
 			//Update legend
+			var legendMinMax = (capabilities.getMinMax() == "auto" ? "default" : capabilities.getMinMax());
 			setLegendSrc(capabilities.getActiveStyle(), legendMinMax);
 		});
+	} else {
+		params.COLORSCALERANGE = capabilities.getMinMax();
+		map.getLayers().item(1).getSource().updateParams(params);
+
+		//Update legend
+		var legendMinMax = (capabilities.getMinMax() == "auto" ? "default" : capabilities.getMinMax());
+		setLegendSrc(capabilities.getActiveStyle(), legendMinMax);
 	}
+}
+
+function stepDates(){
+	//Date buttons
+	var $dateRev = $("#dateRev");
+	var $dateFwd = $("#dateFwd");
+	var $datePlay = $("#datePlay");
+
+	$dateRev.off("click");
+	$dateFwd.off("click");
+	$datePlay.off("click");
+
+	$dateRev.click(function(){
+		reverseDate();
+	});
+
+	$dateFwd.click(function(){
+		forwardDate();
+	});
+
+	$datePlay.click(function(){
+		playDate("btn");
+	});
 }

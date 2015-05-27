@@ -2,64 +2,67 @@
 
 <html>
 <head>
-    <title>WMS Client</title>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="https://static.icos-cp.eu/constant/ol/3.5.0/css/ol.css" type="text/css">
-    <link rel="stylesheet" href="https://static.icos-cp.eu/constant/bootstrap/3.3.4/css/bootstrap.min.css" type="text/css">
+	<title>WMS Client</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="https://static.icos-cp.eu/constant/ol/3.5.0/css/ol.css" type="text/css">
+	<link rel="stylesheet" href="https://static.icos-cp.eu/constant/bootstrap/3.3.4/css/bootstrap.min.css" type="text/css">
 
-    <script type="text/javascript" src="https://static.icos-cp.eu/constant/jquery/1.11.2/jquery.min.js"></script>
-    <script type="text/javascript" src="https://static.icos-cp.eu/constant/ol/3.5.0/js/ol.min.js"></script>
+	<script type="text/javascript" src="https://static.icos-cp.eu/constant/jquery/1.11.2/jquery.min.js"></script>
+	<script type="text/javascript" src="https://static.icos-cp.eu/constant/ol/3.5.0/js/ol.min.js"></script>
 	<script type="text/javascript" src="https://static.icos-cp.eu/constant/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 
-    <script type="text/javascript" src="script/get_capabilities.js"></script>
-    <script type="text/javascript" src="script/init.js"></script>
-    <script type="text/javascript" src="script/utils.js"></script>
+	<script type="text/javascript" src="script/get_capabilities.js"></script>
+	<script type="text/javascript" src="script/init.js"></script>
+	<script type="text/javascript" src="script/utils.js"></script>
 
 
-    <style type="text/css">
-        #map {
-            border: solid black 1px;
-            width: 566px;
-        }
+	<style type="text/css">
+		#map {
+			border: solid black 1px;
+			width: 566px;
+		}
 
-		.custom-mouse-position{
+		.custom-mouse-position {
 			position: relative;
 			top: -20px;
 		}
 
-		label.above{
+		label.above {
 			display: block;
 			margin: 0px;
 		}
+		label[for=dates]{
+			text-indent: 33px;
+		}
 
-		label.above + select{
+		label.above + select {
 			margin-bottom: 10px;
 		}
 
-		input[type=checkbox] + label.right{
+		input[type=checkbox] + label.right {
 			vertical-align: middle;
 		}
 
-		div.right-align{
+		div.right-align {
 			float: right;
 		}
 
-		#swipe{
+		#swipe {
 			margin-top: 2px;
 		}
 
-		#messages{
+		#messages {
 			margin-bottom: 50px;
 		}
 
-		div.error{
+		div.error {
 			font-weight: bold;
 			color: red;
 		}
-    </style>
+	</style>
 
-    <script type="text/javascript">
-        $(document).ready(function () {
+	<script type="text/javascript">
+		$(document).ready(function () {
 			var $services = $("#servicesDdl");
 
 			$services.change(function () {
@@ -67,8 +70,8 @@
 			});
 
 			init($services.val());
-        });
-    </script>
+		});
+	</script>
 </head>
 
 <body>
@@ -87,6 +90,7 @@
 				<option value="/thredds/wms/carbtrack/CTE2014/yearly_1x1_fluxes.nc">Yearly fluxes</option>
 				<option value="/thredds/wms/common/CO2_EUROPE_LSCE.nc">CO2_EUROPE_LSCE</option>
 			</select>
+			<a id="onlineResource" href="http://thredds.icos-cp.eu/thredds/catalog.html" target="_blank">THREDDS Server</a>
 		</div>
 	</div>
 
@@ -102,12 +106,15 @@
 			<label for="styles" class="above">Style</label>
 			<select id="styles"></select>
 		</div>
-		<div id="dateContainer" class="col-xs-2">
+		<div id="dateContainer" class="col-xs-4">
 			<label for="dates" class="above">Date</label>
+			<button id="dateRev"><</button>
 			<select id="dates"></select>
+			<button id="dateFwd">></button>
+			<button id="datePlay" value="off">&#9658;</button>
 		</div>
 		<div id="elevationContainer" class="col-xs-2">
-			<label for="elevations" class="above">Elevation</label>
+			<label for="elevations" class="above">Elevation (<span id="elevationUnit"></span>)</label>
 			<select id="elevations"></select>
 		</div>
 	</div>
@@ -157,6 +164,7 @@
 	</div>
 
 </div>
+
 
 </body>
 </html>
