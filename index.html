@@ -9,12 +9,9 @@
 
 	<script type="text/javascript" src="https://static.icos-cp.eu/constant/jquery/1.11.2/jquery.min.js"></script>
 	<script type="text/javascript" src="https://static.icos-cp.eu/constant/ol/3.5.0/js/ol.min.js"></script>
-	<script type="text/javascript" src="https://static.icos-cp.eu/constant/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="https://static.icos-cp.eu/constant/reflux/0.2.7/reflux.min.js"></script>
 
-	<script type="text/javascript" src="script/get_capabilities.js"></script>
-	<script type="text/javascript" src="script/init.js"></script>
-	<script type="text/javascript" src="script/utils.js"></script>
+	<script type="text/javascript" src="bundle.js"></script>
 
 
 	<style type="text/css">
@@ -62,17 +59,6 @@
 		}
 	</style>
 
-	<script type="text/javascript">
-		$(document).ready(function () {
-			var $services = $("#servicesDdl");
-
-			$services.change(function () {
-				init($services.val());
-			});
-
-			init($services.val());
-		});
-	</script>
 </head>
 
 <body>
@@ -104,19 +90,19 @@
 
 	<div class="row">
 		<div class="col-xs-2">
-			<label for="styles" class="above">Style</label>
-			<select id="styles"></select>
+			<label for="stylesDdl" class="above">Style</label>
+			<select id="stylesDdl"></select>
 		</div>
 		<div id="dateContainer" class="col-xs-4">
-			<label for="dates" class="above">Date</label>
+			<label for="datesDdl" class="above">Date</label>
 			<button id="dateRev"><</button>
-			<select id="dates"></select>
+			<select id="datesDdl"></select>
 			<button id="dateFwd">></button>
 			<button id="datePlay" value="off">&#9658;</button>
 		</div>
 		<div id="elevationContainer" class="col-xs-2">
-			<label for="elevations" class="above">Elevation (<span id="elevationUnit"></span>)</label>
-			<select id="elevations"></select>
+			<label for="elevationsDdl" class="above">Elevation (<span id="elevationUnit"></span>)</label>
+			<select id="elevationsDdl"></select>
 		</div>
 	</div>
 

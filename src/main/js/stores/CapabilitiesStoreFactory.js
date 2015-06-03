@@ -23,8 +23,11 @@ module.exports = function(Backend, capabsWantedAction, logAction){
 				.fail(doIfRelevant(this.onFailure));
 		},
 
-		onSuccess: function(xml){
-			this.trigger(new Capabilities(xml));
+		onSuccess: function(xmlString){
+			var $xml = $(xmlString);
+			var capabs = new Capabilities($xml);
+			this.trigger(capabs);
+			console.log(capabs);
 		},
 
 		onFailure: function(err){
@@ -33,7 +36,7 @@ module.exports = function(Backend, capabsWantedAction, logAction){
 				message: "WMS capabilities XML fetching failed.",
 				payload: err
 			});
-		};
+		}
 
 	});
 };
