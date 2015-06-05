@@ -1,14 +1,5 @@
 $(function () {
 
-	var Actions = Reflux.createActions([
-		"capabsWantedAction",
-		"layerChosenAction",
-		"styleChosenAction",
-		"dateChosenAction",
-		"elevationChosenAction",
-		"logAction"
-	]);
-
 	var config = {
 		mapWidth: $("#map").width(),
 		mapId: "map",
@@ -16,58 +7,39 @@ $(function () {
 		layersId: "layersDdl",
 		stylesId: "stylesDdl",
 		datesId: "datesDdl",
-		elevationsId: "elevationsDdl"
+		elevationsId: "elevationsDdl",
+		log: function(payload){
+			console.log(payload);
+		}
 	};
+
+	var serviceView = require('./views/ServiceViewFactory.js')(config.servicesId);
+	var serviceSelectedAction = serviceView.action;
 
 	var Backend = require('./Backend.js');
 
 	var CapabilitiesStore = require('./stores/CapabilitiesStoreFactory.js')(
 		Backend,
-		Actions.capabsWantedAction,
-		Actions.logAction
+		serviceSelectedAction,
+		config.log
 	);
 
-	var MapStore = require("./stores/MapStoreFactory.js")(
-		config.mapWidth,
+	var layerChosenAction = require('./views/LayerViewFactory.js')(config.layersId, CapabilitiesStore).action;
+	var styleChosenAction = require('./views/StyleViewFactory.js')(config.stylesId, CapabilitiesStore).action;
+	var dateChosenAction = require('./views/DateViewFactory.js')(config.datesId, CapabilitiesStore).action;
+	var elevationChosenAction = require('./views/ElevationViewFactory.js')(config.elevationsId, CapabilitiesStore).action;
+
+	var MinMaxStore = require("./stores/MinMaxStoreFactory.js")(
+		config,
 		Backend,
-		Actions.layerChosenAction,
-		Actions.styleChosenAction,
-		Actions.dateChosenAction,
-		Actions.elevationChosenAction,
-		Actions.logAction
+		layerChosenAction,
+		dateChosenAction,
+		elevationChosenAction
 	);
 
-	var serviceSelector = require('./views/ServiceSelectorFactory.js')(
-		config.servicesId,
-		Actions.capabsWantedAction
-	);
+	var MapStore = require("./stores/MapStoreFactory.js")(config, MinMaxStore, styleChosenAction);
+	var MapView = require('./views/MapViewFactory.js')(config.mapId, MapStore, config.log);
 
-	var layerSelector = require('./views/LayerViewFactory.js')(
-		config.layersId,
-		CapabilitiesStore,
-		Actions.layerChosenAction
-	);
-
-	var styleSelector = require('./views/StyleViewFactory.js')(
-		config.stylesId,
-		CapabilitiesStore,
-		Actions.styleChosenAction
-	);
-
-	var dateSelector = require('./views/DateViewFactory.js')(
-		config.datesId,
-		CapabilitiesStore,
-		Actions.dateChosenAction
-	);
-
-	var elevationSelector = require('./views/ElevationViewFactory.js')(
-		config.elevationsId,
-		CapabilitiesStore,
-		Actions.elevationChosenAction
-	);
-
-	var mapModule = require('./views/MapViewFactory.js')("map", MapStore);
-
-	serviceSelector.trigger();
+	serviceView.trigger();
 
 });

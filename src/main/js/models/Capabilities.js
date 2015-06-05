@@ -8,6 +8,17 @@ function CapabilitiesClass(url, $xmlDoc) {
 	this.styles = getStyles($xmlDoc);
 	this.dates = getDates($xmlDoc);
 	this.elevations = getElevations($xmlDoc);
+
+	this.getLayer = function(layerName){
+		return this.layers.filter(function(layer){
+			return layer.name == layerName;
+		})[0];
+	};
+	
+	this.getWorldSize = function(){
+		//TODO Implement this
+		return {width: 360, height: 180};
+	};
 }
 
 function getServiceTitle($xmlDoc) {

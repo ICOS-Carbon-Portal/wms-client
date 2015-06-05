@@ -2,12 +2,12 @@ var Capabilities = require('../models/Capabilities.js');
 var Utils = require('../Utils.js');
 
 
-module.exports = function(Backend, capabsWantedAction, logAction){
+module.exports = function(Backend, serviceSelectedAction, logAction){
 
 	return Reflux.createStore({
 
 		init: function(){
-			this.listenTo(capabsWantedAction, this.fetchCapabilities);
+			this.listenTo(serviceSelectedAction, this.fetchCapabilities);
 		},
 
 		fetchCapabilities: function(serviceUrl){

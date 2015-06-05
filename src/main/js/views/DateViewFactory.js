@@ -1,10 +1,11 @@
-module.exports = function(elemId, CapabilitiesStore, dateChosenAction){
+module.exports = function(elemId, CapabilitiesStore){
 
 	var $ddl = $("#" + elemId);
+	var action = Reflux.createAction();
 	var latestCapabilities;
 
 	function trigger() {
-		dateChosenAction({
+		action({
 			date: $ddl.val(),
 			capabilities: latestCapabilities
 		});
@@ -22,6 +23,8 @@ module.exports = function(elemId, CapabilitiesStore, dateChosenAction){
 		latestCapabilities = capabilities;
 		trigger();
 	});
+
+	return {action: action};
 
 };
 
