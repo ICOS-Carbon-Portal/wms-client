@@ -7,5 +7,13 @@ module.exports = {
 			url: url + "?service=WMS&version=1.3.0&request=GetCapabilities",
 			dataType: "xml"
 		});
+	},
+
+	getMinMax: function (url) {
+		return $.ajax({
+			type: "GET",
+			url: url,
+			dataType: "json"
+		});
 	}
 };

@@ -1,30 +1,73 @@
-var Actions = Reflux.createActions([
-	"capabsWantedAction",
-	"styleChosenAction",
-	"logAction"
-]);
-
-var Backend = require('./Backend.js');
-
-var CapabilitiesStore = require('./stores/CapabilitiesStoreFactory.js')(
-	Backend,
-	Actions.capabsWantedAction,
-	Actions.logAction
-);
-
 $(function () {
+
+	var Actions = Reflux.createActions([
+		"capabsWantedAction",
+		"layerChosenAction",
+		"styleChosenAction",
+		"dateChosenAction",
+		"elevationChosenAction",
+		"logAction"
+	]);
+
+	var config = {
+		mapWidth: $("#map").width(),
+		mapId: "map",
+		servicesId: "servicesDdl",
+		layersId: "layersDdl",
+		stylesId: "stylesDdl",
+		datesId: "datesDdl",
+		elevationsId: "elevationsDdl"
+	};
+
+	var Backend = require('./Backend.js');
+
+	var CapabilitiesStore = require('./stores/CapabilitiesStoreFactory.js')(
+		Backend,
+		Actions.capabsWantedAction,
+		Actions.logAction
+	);
+
+	var MapStore = require("./stores/MapStoreFactory.js")(
+		config.mapWidth,
+		Backend,
+		Actions.layerChosenAction,
+		Actions.styleChosenAction,
+		Actions.dateChosenAction,
+		Actions.elevationChosenAction,
+		Actions.logAction
+	);
+
 	var serviceSelector = require('./views/ServiceSelectorFactory.js')(
-		"servicesDdl",
+		config.servicesId,
 		Actions.capabsWantedAction
 	);
 
-	serviceSelector.trigger();
+	var layerSelector = require('./views/LayerViewFactory.js')(
+		config.layersId,
+		CapabilitiesStore,
+		Actions.layerChosenAction
+	);
 
 	var styleSelector = require('./views/StyleViewFactory.js')(
-		"stylesDdl",
+		config.stylesId,
 		CapabilitiesStore,
 		Actions.styleChosenAction
 	);
-});
 
-Actions.styleChosenAction.listen(function(style){console.log(style);});
+	var dateSelector = require('./views/DateViewFactory.js')(
+		config.datesId,
+		CapabilitiesStore,
+		Actions.dateChosenAction
+	);
+
+	var elevationSelector = require('./views/ElevationViewFactory.js')(
+		config.elevationsId,
+		CapabilitiesStore,
+		Actions.elevationChosenAction
+	);
+
+	var mapModule = require('./views/MapViewFactory.js')("map", MapStore);
+
+	serviceSelector.trigger();
+
+});

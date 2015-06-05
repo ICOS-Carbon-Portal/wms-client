@@ -1,11 +1,11 @@
-module.exports = function(elemId, CapabilitiesStore, styleChosenAction){
+module.exports = function(elemId, CapabilitiesStore, layerChosenAction){
 
 	var $ddl = $("#" + elemId);
 	var latestCapabilities;
 
 	function trigger() {
-		styleChosenAction({
-			style: $ddl.val(),
+		layerChosenAction({
+			layer: $ddl.val(),
 			capabilities: latestCapabilities
 		});
 	}
@@ -15,11 +15,9 @@ module.exports = function(elemId, CapabilitiesStore, styleChosenAction){
 	CapabilitiesStore.listen(function(capabilities){
 		$ddl.find('option').remove().end();
 
-		capabilities.styles.forEach(function (item) {
-			$ddl.append($("<option />").val(item.name).text(item.name.replace("boxfill/", "")));
+		capabilities.layers.forEach(function (item) {
+			$ddl.append($("<option />").val(item.name).text(item.name + "  - " + item.abstract));
 		});
-
-		$ddl.prop("selectedIndex", 1);
 
 		latestCapabilities = capabilities;
 		trigger();

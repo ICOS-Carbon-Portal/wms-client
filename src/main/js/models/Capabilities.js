@@ -1,5 +1,6 @@
-function CapabilitiesClass($xmlDoc) {
+function CapabilitiesClass(url, $xmlDoc) {
 	//Parse XML and build the capabilitis object
+	this.serviceUrl = url;
 	this.serviceTitle = getServiceTitle($xmlDoc);
 	this.formats = getFormats($xmlDoc);
 	this.coordSystems = getCoordSystems($xmlDoc);

@@ -10,24 +10,23 @@ module.exports = function(Backend, capabsWantedAction, logAction){
 			this.listenTo(capabsWantedAction, this.fetchCapabilities);
 		},
 
-		fetchCapabilities: function(service){
+		fetchCapabilities: function(serviceUrl){
 
-			this.service = service;
+			this.serviceUrl = serviceUrl;
 
 			var doIfRelevant = Utils.doIfConditionHolds.bind(this, function(){
-				return this.service == service;
+				return this.serviceUrl == serviceUrl;
 			});
 
-			Backend.getCapabilitiesXml(service)
+			Backend.getCapabilitiesXml(serviceUrl)
 				.done(doIfRelevant(this.onSuccess))
 				.fail(doIfRelevant(this.onFailure));
 		},
 
 		onSuccess: function(xmlString){
 			var $xml = $(xmlString);
-			var capabs = new Capabilities($xml);
+			var capabs = new Capabilities(this.serviceUrl, $xml);
 			this.trigger(capabs);
-			console.log(capabs);
 		},
 
 		onFailure: function(err){
