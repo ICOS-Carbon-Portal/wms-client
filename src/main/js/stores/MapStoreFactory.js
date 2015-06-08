@@ -1,4 +1,6 @@
-module.exports = function(config, MinMaxStore, styleChosenAction){
+var Utils = require('../Utils.js');
+
+module.exports = function(MinMaxStore, styleChosenAction){
 
 	return Reflux.createStore({
 
@@ -17,12 +19,14 @@ module.exports = function(config, MinMaxStore, styleChosenAction){
 			}
 
 			var state = this.mapState;
-
 			$.extend(state, update);
 
-			if(state.style && state.min){
-				/* presense of state.min implies (according to implicit message "contracts") that
-				   layer, date, elevation and capabilities are also present */
+			var requiredProps = [
+				'style', 'min', 'max', 'layer',
+				'date', 'elevation', 'capabilities'
+			];
+
+			if(Utils.propertiesAreDefined(state, requiredProps)){
 				this.trigger(state);
 			}
 		}

@@ -37,7 +37,7 @@ $(function () {
 		elevationChosenAction
 	);
 
-	var MapStore = require("./stores/MapStoreFactory.js")(config, MinMaxStore, styleChosenAction);
+	var MapStore = require("./stores/MapStoreFactory.js")(MinMaxStore, styleChosenAction);
 	var MapView = require('./views/MapViewFactory.js')(config.mapId, MapStore, config.log);
 
 	serviceView.trigger();

@@ -5,10 +5,12 @@ var browserify = require('browserify');
 var del = require('del');
 var source = require('vinyl-source-stream');
 var gutil = require('gulp-util');
+var jasmine = require('gulp-jasmine');
 
 var paths = {
 	entries: ['src/main/js/main.js'],
 	js: ['src/main/js/**/*.js'],
+	testjs: ['src/test/js/**/*.js'],
 	target: './',
 	bundleFile: 'bundle.js'
 };
@@ -36,6 +38,12 @@ gulp.task('js', ['clean'], function () {
 gulp.task('watch', function () {
 	var sources = paths.js;
 	gulp.watch(sources, ['js']);
+});
+
+gulp.task('test', function () {
+	return gulp
+		.src(paths.testjs)
+		.pipe(jasmine());
 });
 
 gulp.task('default', ['watch', 'js']);

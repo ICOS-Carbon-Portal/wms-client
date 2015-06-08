@@ -23,7 +23,7 @@ module.exports = function(config, Backend, layerChosenAction, dateChosenAction, 
 
 			$.extend(state, update);
 
-			if(state.layer && state.date && state.elevation){
+			if(Utils.propertiesAreDefined(state, ['layer', 'date', 'elevation'])){
 				var minMaxUrl = getMinMaxUrl(config.mapWidth, state);
 				this.minMaxUrl = minMaxUrl;
 

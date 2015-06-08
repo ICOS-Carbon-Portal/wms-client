@@ -12,6 +12,13 @@ module.exports = {
 				innerFunction.apply(self, arguments);
 			}
 		};
+	},
+
+	propertiesAreDefined: function(obj, props){
+		return props.every(function(prop){
+			var propVal = obj[prop];
+			return (typeof propVal !== 'undefined');
+		});
 	}
 
 };
