@@ -25,7 +25,7 @@ module.exports = function(Backend, serviceSelectedAction, logAction){
 
 		onSuccess: function(xmlString){
 			var $xml = $(xmlString);
-			var capabs = new Capabilities(this.serviceUrl, $xml);
+			var capabs = new Capabilities(this.serviceUrl, $xml, $("#map").width());
 			this.trigger(capabs);
 		},
 

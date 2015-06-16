@@ -1,30 +1,52 @@
-module.exports = function(elemId, CapabilitiesStore){
+module.exports = function(config, DateStore){
 
-	var $ddl = $("#" + elemId);
-	var action = Reflux.createAction();
-	var latestCapabilities;
+	var $ddl = $("#" + config.datesId);
+	var $dateRev = $("#" + config.dateRev);
+	var $dateFwd = $("#" + config.dateFwd);
+	var $datePlay = $("#" + config.datePlay);
+	var lastDates;
 
-	function trigger() {
-		action({
-			date: $ddl.val(),
-			capabilities: latestCapabilities
-		});
-	}
+	DateStore.listen(function(state){
+		var currentDates = state.dates;
 
-	$ddl.change(trigger);
+		if(lastDates !== currentDates) {
+			$ddl.find('option').remove().end();
 
-	CapabilitiesStore.listen(function(capabilities){
-		$ddl.find('option').remove().end();
+			currentDates.forEach(function (date) {
+				$ddl.append($("<option />").val(date).text(new Date(date).toISOString()));
+			});
+		}
 
-		capabilities.dates.forEach(function (item) {
-			$ddl.append($("<option />").val(item).text(new Date(item).toISOString()));
-		});
+		lastDates = currentDates;
 
-		latestCapabilities = capabilities;
-		trigger();
+		$ddl[0].selectedIndex = state.dateIndex;
+
+		if (state.playing){
+			$datePlay.html("&#9724;");
+		} else {
+			$datePlay.html("&#9658;");
+		}
 	});
 
-	return {action: action};
+	$ddl.change(function () {
+		DateStore.actions.dateChosen($ddl.val());
+	});
+
+	$dateRev.off("click");
+	$dateFwd.off("click");
+	$datePlay.off("click");
+
+	$dateRev.click(function(){
+		DateStore.actions.previousDate();
+	});
+
+	$dateFwd.click(function(){
+		DateStore.actions.nextDate();
+	});
+
+	$datePlay.click(function(){
+		DateStore.actions.playPause();
+	});
 
 };
 

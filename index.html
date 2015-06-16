@@ -2,7 +2,7 @@
 
 <html>
 <head>
-	<title>WMS Client</title>
+	<title>ICOS Carbon Portal THREDDS server</title>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="https://static.icos-cp.eu/constant/ol/3.5.0/css/ol.css" type="text/css">
 	<link rel="stylesheet" href="https://static.icos-cp.eu/constant/bootstrap/3.3.4/css/bootstrap.min.css" type="text/css">
@@ -17,7 +17,7 @@
 	<style type="text/css">
 		#map {
 			border: solid black 1px;
-			width: 566px;
+			width: 100%;
 		}
 
 		.custom-mouse-position {
@@ -29,7 +29,7 @@
 			display: block;
 			margin: 0px;
 		}
-		label[for=dates]{
+		label[for=datesDdl]{
 			text-indent: 33px;
 		}
 
@@ -66,7 +66,7 @@
 
 	<div class="row">
 		<div class="col-xs-12">
-			<h3 id="serviceTitle"></h3>
+			<h3 id="serviceTitle">ICOS Carbon Portal THREDDS server</h3>
 		</div>
 	</div>
 
@@ -74,8 +74,10 @@
 		<div class="col-xs-12">
 			<label for="servicesDdl" class="above">Service</label>
 			<select id="servicesDdl">
-				<option value="/thredds/wms/carbtrack/CTE2014/yearly_1x1_fluxes.nc">Yearly fluxes</option>
-				<option value="/thredds/wms/common/CO2_EUROPE_LSCE.nc">CO2_EUROPE_LSCE</option>
+				<option value="/thredds/wms/common/netcdf/dataDemo/yearly_1x1_fluxes_limited.nc">Yearly fluxes</option>
+				<option value="/thredds/wms/common/netcdf/dataDemo/CO2_EUROPE_LSCE.nc">CO2_EUROPE_LSCE</option>
+				<option value="/thredds/wms/common/netcdf/dataDemo/Tair_daily_WFDEI_201211.nc">Tair_daily_WFDEI_201211</option>
+				<option value="/thredds/wms/common/netcdf/dataDemo/tasmax_day_BCSD_rcp85_r1i1p1_ACCESS1-0_2100.nc">NASA_tasmax_day_BCSD_rcp85_r1i1p1_ACCESS1-0_2100</option>
 			</select>
 			<a id="onlineResource" href="http://thredds.icos-cp.eu/thredds/catalog.html" target="_blank">THREDDS Server</a>
 		</div>
@@ -98,7 +100,7 @@
 			<button id="dateRev"><</button>
 			<select id="datesDdl"></select>
 			<button id="dateFwd">></button>
-			<button id="datePlay" value="off">&#9658;</button>
+			<button id="datePlay">&#9658;</button>
 		</div>
 		<div id="elevationContainer" class="col-xs-2" style="display: none;">
 			<label for="elevationsDdl" class="above">Elevation (<span id="elevationUnit"></span>)</label>

@@ -6,7 +6,7 @@ module.exports = function(config, Backend, layerChosenAction, dateChosenAction, 
 
 		init: function(){
 			this.listenTo(layerChosenAction, this.updateReceived);
-			this.listenTo(dateChosenAction, this.updateReceived);
+			this.listenTo(dateChosenAction, payloadFilter(this.updateReceived, ['date', 'capabilities']));
 			this.listenTo(elevationChosenAction, this.updateReceived);
 
 			this.minMaxState = {};
@@ -31,7 +31,7 @@ module.exports = function(config, Backend, layerChosenAction, dateChosenAction, 
 					return this.minMaxUrl == minMaxUrl;
 				});
 
-				Backend.getCapabilitiesXml(serviceUrl)
+				Backend.getMinMax(minMaxUrl)
 					.done(doIfRelevant(this.onSuccess))
 					.fail(doIfRelevant(this.onFailure));
 			}
@@ -56,14 +56,21 @@ module.exports = function(config, Backend, layerChosenAction, dateChosenAction, 
 function getMinMaxUrl(mapWidth, state) {
 	var capabs = state.capabilities;
 
-	var world = capabs.getWorldSize();
-	var mapHeight = Math.round(mapWidth / world.width * world.height);
-
 	return capabs.serviceUrl + "?item=minmax&layers=" + state.layer +
-		"&width=" + mapWidth + "&height=" + mapHeight +
-		"&bbox=" + capabs.getLayer(layer).bBox4326Str +
+		"&width=" + capabs.mapDims.width + "&height=" + capabs.mapDims.height +
+		"&bbox=" + capabs.geo.bBox4326Str +
 		"&elevation=" + state.elevation +
 		"&time=" + state.date + "&srs=EPSG:4326" +
 		"&request=GetMetadata";
 }
 
+function payloadFilter(handler, props){
+
+	return function(payload){
+		var newPayload = {};
+		props.forEach(function (prop){
+			newPayload[prop] = payload[prop];
+		});
+		handler(newPayload);
+	}
+}
