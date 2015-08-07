@@ -9,22 +9,33 @@ module.exports = function(config, DateStore){
 	DateStore.listen(function(state){
 		var currentDates = state.dates;
 
-		if(lastDates !== currentDates) {
-			$ddl.find('option').remove().end();
+		if (state.sender == "animate" && !state.playing){
+			$datePlay.html("&#9658;");
+		} else if (state.sender == null && !state.playing){
+			$datePlay.html("&#9658;");
 
-			currentDates.forEach(function (date) {
-				$ddl.append($("<option />").val(date).text(new Date(date).toISOString()));
-			});
+			if (lastDates !== currentDates) {
+				$ddl.find('option').remove().end();
+
+				currentDates.forEach(function (date) {
+					$ddl.append($("<option />").val(date).text(new Date(date).toISOString()));
+				});
+
+				if (isDateValid(currentDates, state.capabs.Services.query.d)) {
+					$ddl.val(state.capabs.Services.query.d);
+
+					state.date = state.capabs.Services.query.d;
+					state.dateIndex = $ddl[0].selectedIndex;
+				}
+			}
+
+			lastDates = currentDates;
+		} else {
+			$datePlay.html("&#9724;");
 		}
 
-		lastDates = currentDates;
-
-		$ddl[0].selectedIndex = state.dateIndex;
-
-		if (state.playing){
-			$datePlay.html("&#9724;");
-		} else {
-			$datePlay.html("&#9658;");
+		if (state.dateIndex < currentDates.length) {
+			$ddl[0].selectedIndex = state.dateIndex;
 		}
 	});
 
@@ -48,6 +59,18 @@ module.exports = function(config, DateStore){
 		DateStore.actions.playPause();
 	});
 
+};
+
+function isDateValid(datesArr, d){
+	var isValid = false;
+
+	datesArr.forEach(function (date){
+		if(date == d){
+			isValid = true;
+		}
+	});
+
+	return isValid;
 };
 
 //Redefine the Date.toISOString method

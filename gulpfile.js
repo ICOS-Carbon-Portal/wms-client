@@ -46,4 +46,9 @@ gulp.task('test', function () {
 		.pipe(jasmine());
 });
 
+gulp.task('tdd', ['test'], function () {
+	var sources = paths.js.concat(paths.testjs);
+	gulp.watch(sources, ['test']);
+});
+
 gulp.task('default', ['watch', 'js']);

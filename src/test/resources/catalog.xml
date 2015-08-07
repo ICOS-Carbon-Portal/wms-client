@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog xmlns="http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0" xmlns:xlink="http://www.w3.org/1999/xlink" name="THREDDS Server Default Catalog" version="1.0.1">
+	<service name="all" serviceType="Compound" base="">
+		<service name="odap" serviceType="OPENDAP" base="/thredds/dodsC/" />
+		<service name="dap4" serviceType="DAP4" base="/thredds/dap4/" />
+		<service name="http" serviceType="HTTPServer" base="/thredds/fileServer/" />
+		<service name="wcs" serviceType="WCS" base="/thredds/wcs/" />
+		<service name="wms" serviceType="WMS" base="/thredds/wms/" />
+		<service name="ncss" serviceType="NetcdfSubset" base="/thredds/ncss/" />
+	</service>
+	<service name="dap" serviceType="Compound" base="">
+		<service name="odap" serviceType="OPENDAP" base="/thredds/dodsC/" />
+		<service name="dap4" serviceType="DAP4" base="/thredds/dap4/" />
+	</service>
+	<dataset name="Yearly fluxes" ID="yearlyFluxes" urlPath="common/netcdf/dataDemo/yearly_1x1_fluxes_limited.nc">
+		<serviceName>all</serviceName>
+		<dataType>GRID</dataType>
+	</dataset>
+	<dataset name="CO2_EUROPE_LSCE" ID="CO2_EUROPE_LSCE" urlPath="common/netcdf/dataDemo/CO2_EUROPE_LSCE.nc">
+		<serviceName>all</serviceName>
+		<dataType>GRID</dataType>
+	</dataset>
+	<dataset name="Tair_daily_WFDEI_201211" ID="Tair_daily_WFDEI_201211" urlPath="common/netcdf/dataDemo/Tair_daily_WFDEI_201211.nc">
+		<serviceName>all</serviceName>
+		<dataType>GRID</dataType>
+	</dataset>
+	<dataset name="NASA_tasmax_day_BCSD_rcp85_r1i1p1_ACCESS1-0_2100" ID="tasmax_day_BCSD_rcp85_r1i1p1_ACCESS1-0_2100" urlPath="common/netcdf/dataDemo/tasmax_day_BCSD_rcp85_r1i1p1_ACCESS1-0_2100.nc">
+		<serviceName>all</serviceName>
+		<dataType>GRID</dataType>
+	</dataset>
+</catalog>

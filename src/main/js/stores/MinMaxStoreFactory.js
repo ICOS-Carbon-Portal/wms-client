@@ -6,22 +6,22 @@ module.exports = function(config, Backend, layerChosenAction, dateChosenAction, 
 
 		init: function(){
 			this.listenTo(layerChosenAction, this.updateReceived);
-			this.listenTo(dateChosenAction, payloadFilter(this.updateReceived, ['date', 'capabilities']));
+			this.listenTo(dateChosenAction, payloadFilter(this.updateReceived, ['date', 'capabs']));
 			this.listenTo(elevationChosenAction, this.updateReceived);
 
 			this.minMaxState = {};
 		},
 
 		updateReceived: function(update){
-			var currentCapabs = this.minMaxState.capabilities;
+			var currentCapabs = this.minMaxState.capabs;
 
-			if(!currentCapabs || currentCapabs.serviceUrl != update.capabilities.serviceUrl){
+			if(!currentCapabs || currentCapabs.serviceUrl != update.capabs.serviceUrl){
 				this.minMaxState = {};
 			}
 
 			var state = this.minMaxState;
 
-			$.extend(state, update);
+			Utils.extend(state, update);
 
 			if(Utils.propertiesAreDefined(state, ['layer', 'date', 'elevation'])){
 				var minMaxUrl = getMinMaxUrl(config.mapWidth, state);
@@ -39,7 +39,7 @@ module.exports = function(config, Backend, layerChosenAction, dateChosenAction, 
 
 		onSuccess: function(minMax){
 			var state = this.minMaxState;
-			$.extend(state, minMax);
+			Utils.extend(state, minMax);
 			this.trigger(state);
 		},
 
@@ -54,7 +54,7 @@ module.exports = function(config, Backend, layerChosenAction, dateChosenAction, 
 };
 
 function getMinMaxUrl(mapWidth, state) {
-	var capabs = state.capabilities;
+	var capabs = state.capabs;
 
 	return capabs.serviceUrl + "?item=minmax&layers=" + state.layer +
 		"&width=" + capabs.mapDims.width + "&height=" + capabs.mapDims.height +

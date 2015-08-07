@@ -1,4 +1,4 @@
-module.exports = function(elemId, CapabilitiesStore){
+module.exports = function(elemId, ServiceStore, CapabilitiesStore){
 
 	var $ddl = $("#" + elemId);
 	var action = Reflux.createAction();
@@ -7,24 +7,38 @@ module.exports = function(elemId, CapabilitiesStore){
 	function trigger() {
 		action({
 			style: $ddl.val(),
-			capabilities: latestCapabilities
+			capabs: latestCapabilities
 		});
 	}
 
 	$ddl.change(trigger);
 
-	CapabilitiesStore.listen(function(capabilities){
+	CapabilitiesStore.listen(function(capabs){
 		$ddl.find('option').remove().end();
 
-		capabilities.styles.forEach(function (item) {
+		capabs.styles.forEach(function (item) {
 			$ddl.append($("<option />").val(item.name).text(item.name.replace("boxfill/", "")));
 		});
 
-		$ddl.prop("selectedIndex", 1);
+		if (isStyleValid(capabs.styles, capabs.Services.query.s)){
+			$ddl.val("boxfill/" + capabs.Services.query.s);
+		}
 
-		latestCapabilities = capabilities;
+		latestCapabilities = capabs;
 		trigger();
 	});
 
 	return {action: action};
+};
+
+function isStyleValid(styleClassArr, s){
+	var isValid = false;
+
+	styleClassArr.forEach(function (style){
+		if(style.name.endsWith(s)){
+			isValid = true;
+		}
+	});
+
+	return isValid;
 };

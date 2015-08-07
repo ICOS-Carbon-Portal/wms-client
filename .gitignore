@@ -1,6 +1,5 @@
 .idea/
 junk/
-capabilities/
 node_modules/
 npm-debug.log
 bundle.js

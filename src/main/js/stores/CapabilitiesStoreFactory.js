@@ -1,40 +1,43 @@
-var Capabilities = require('../models/Capabilities.js');
 var Utils = require('../Utils.js');
 
-
-module.exports = function(Backend, serviceSelectedAction, logAction){
+module.exports = function(Backend, ServiceStore, config){
 
 	return Reflux.createStore({
 
 		init: function(){
-			this.listenTo(serviceSelectedAction, this.fetchCapabilities);
+			this.listenTo(ServiceStore, this.fetchCapabilities);
 		},
 
-		fetchCapabilities: function(serviceUrl){
-
+		fetchCapabilities: function(Services){
+			var serviceUrl = Services.getServiceUrl();
 			this.serviceUrl = serviceUrl;
+			this.Services = Services;
 
 			var doIfRelevant = Utils.doIfConditionHolds.bind(this, function(){
 				return this.serviceUrl == serviceUrl;
 			});
 
-			Backend.getCapabilitiesXml(serviceUrl)
+			Backend.requestCapabs(serviceUrl)
 				.done(doIfRelevant(this.onSuccess))
 				.fail(doIfRelevant(this.onFailure));
 		},
 
 		onSuccess: function(xmlString){
-			var $xml = $(xmlString);
-			var capabs = new Capabilities(this.serviceUrl, $xml, $("#map").width());
+			var capabs = Backend.getCapabs(xmlString, this.serviceUrl, config);
+			capabs.Services = this.Services;
 			this.trigger(capabs);
 		},
 
 		onFailure: function(err){
-			logAction({
+			config.log({
 				type: "error",
 				message: "WMS capabilities XML fetching failed.",
 				payload: err
 			});
+
+			if (config.addMessage) {
+				config.addMessage("Could not retrieve capabilities from server", true);
+			}
 		}
 
 	});

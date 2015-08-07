@@ -1,12 +1,20 @@
-module.exports = function(elemId, MapStore, mapReadyAction, logAction){
+/*
+
+Map view for OpenLayers 3.5.0
+
+ */
+
+module.exports = function(elemId, MapStore, mapReadyAction, config){
 
 	var $mapDiv = $("#" + elemId);
 	var map;
 	var serviceUrl;
+	var threddsMapIndex = 2;
+	var cntrBdyIndex = 3;
 
 	MapStore.listen(function(state) {
 
-		var latestServiceUrl = state.capabilities.serviceUrl;
+		var latestServiceUrl = state.capabs.serviceUrl;
 
 		if (serviceUrl !== latestServiceUrl) {
 			serviceUrl = latestServiceUrl;
@@ -18,13 +26,7 @@ module.exports = function(elemId, MapStore, mapReadyAction, logAction){
 			$("#messages").children().remove();
 		}
 
-		//logAction("serviceUrl: " + state.capabilities.serviceUrl);
-		//logAction("Layer: " + state.layer);
-		//logAction("Style: " + state.style);
-		logAction("Date: " + state.date);
-		//logAction("Elevation: " + state.elevation);
-		//logAction("Min: " + state.min);
-		//logAction("Max: " + state.max);
+		updateUrlBar(state);
 
 		if (map) {
 			updateMap(state);
@@ -33,8 +35,12 @@ module.exports = function(elemId, MapStore, mapReadyAction, logAction){
 		}
 	});
 
+	function updateUrlBar(state){
+		history.pushState({urlPath: state.requestUrl}, "", state.requestUrl);
+	};
+
 	function updateMap(state){
-		var params = map.getLayers().item(1).getSource().getParams();
+		var params = map.getLayers().item(threddsMapIndex).getSource().getParams();
 		var minMax = state.min + "," + state.max;
 
 		params.LAYERS = state.layer;
@@ -43,29 +49,33 @@ module.exports = function(elemId, MapStore, mapReadyAction, logAction){
 		params.TIME = state.date;
 		params.COLORSCALERANGE = minMax;
 
-		map.getLayers().item(1).getSource().updateParams(params);
+		map.getLayers().item(threddsMapIndex).getSource().updateParams(params);
 
 		//Request legend
-		var legendURL = getLegendURL(state.capabilities.serviceUrl, state.layer, state.style);
+		var legendURL = getLegendURL(state.capabs.serviceUrl, state.layer, state.style);
 		setLegendSrc(legendURL, minMax);
 	}
 
 	function initMap(state){
-		$mapDiv.height(state.capabilities.mapDims.height);
+		$mapDiv.height(state.capabs.mapDims.height);
 
 		//Layer 0
-		worldmap = new ol.layer.Tile({
+		var worldMap = new ol.layer.Tile({
 			visible: true,
 			source: new ol.source.MapQuest({layer: 'osm'})
 		});
 
+		//Layer 1
+		var worldAerial = new ol.layer.Tile({
+			visible: false,
+			source: new ol.source.MapQuest({layer: 'sat'})
+		});
+
 		var minMax = state.min + "," + state.max;
 
-
-
-		//Layer 1
-		threddsSource = new ol.source.ImageWMS({
-			url: state.capabilities.serviceUrl,
+		//Layer 2
+		var threddsSource = new ol.source.ImageWMS({
+			url: state.capabs.serviceUrl,
 			params: {
 				'LAYERS': state.layer,
 				'ELEVATION': state.elevation,
@@ -75,8 +85,8 @@ module.exports = function(elemId, MapStore, mapReadyAction, logAction){
 				'COLORSCALERANGE': minMax,
 				'NUMCOLORBANDS': 254,
 				'LOGSCALE': 'false',
-				'WIDTH': state.capabilities.mapDims.width,
-				'HEIGHT': state.capabilities.mapDims.height
+				'WIDTH': state.capabs.mapDims.width,
+				'HEIGHT': state.capabs.mapDims.height
 			}
 		});
 
@@ -89,8 +99,8 @@ module.exports = function(elemId, MapStore, mapReadyAction, logAction){
 			source: threddsSource
 		});
 
-		//Layer 2
-		countryBorders = new ol.layer.Image({
+		//Layer 3
+		var countryBorders = new ol.layer.Image({
 			source: new ol.source.ImageVector({
 				source: new ol.source.Vector({
 					url: 'maps/countries.geojson',
@@ -106,41 +116,35 @@ module.exports = function(elemId, MapStore, mapReadyAction, logAction){
 		});
 
 		map = new ol.Map({
-			layers: [worldmap, thredds, countryBorders],
+			layers: [worldMap, worldAerial, thredds, countryBorders],
 			target: elemId,
 			renderer: 'canvas'
-			//view: new ol.View({
-			//    center: capabilities.getActiveLayer().centre3857Point,
-			//    zoom: getZoomLevel(capabilities.getActiveLayer().width3857)
-			//})
 		});
 
-		//var params = map.getLayers().item(1).getSource().getParams();
-
 		//Set extent
-		map.getView().fitExtent(state.capabilities.geo.bBox3857Arr, map.getSize());
+		map.getView().fitExtent(state.capabs.geo.bBox3857Arr, map.getSize());
 
-		addControls(map, state.capabilities);
+		addControls(map, state.capabs);
 
-		addMapSwipe(map, state.capabilities);
+		addMapSwipe(map, threddsMapIndex, cntrBdyIndex);
 
-		addCountryBorderHighlight(map);
+		addCountryBorderHighlight(map, cntrBdyIndex);
 
-		var legendURL = getLegendURL(state.capabilities.serviceUrl, state.layer, state.style);
+		addSwitchBgMap(map, config.bgMapsName);
 
-		addMinMaxSwitch(map, legendURL, minMax);
+		var legendURL = getLegendURL(state.capabs.serviceUrl, state.layer, state.style);
 
 		//Request legend
 		setLegendSrc(legendURL, minMax);
 	}
 };
 
-function addControls(map, capabilities) {
+function addControls(map, capabs) {
 	map.addControl(
 		new ol.control.ZoomToExtent({
 			label: "F",
 			tipLabel: "Zoom to full extent",
-			extent: capabilities.geo.bBox3857Arr
+			extent: capabs.geo.bBox3857Arr
 		})
 	);
 
@@ -157,14 +161,14 @@ function addControls(map, capabilities) {
 	);
 }
 
-function addMapSwipe(map) {
+function addMapSwipe(map, threddsMapIndex, cntrBdyIndex) {
 	var $swipe = $("#swipe");
 	$swipe.val(0);
 	$swipe.width($("#map").width);
 
 	var swipe = document.getElementById('swipe');
 
-	var thredds = map.getLayers().item(1);
+	var thredds = map.getLayers().item(threddsMapIndex);
 
 	thredds.on('precompose', function (event) {
 		var ctx = event.context;
@@ -181,7 +185,7 @@ function addMapSwipe(map) {
 		ctx.restore();
 	});
 
-	var countryBorders = map.getLayers().item(2);
+	var countryBorders = map.getLayers().item(cntrBdyIndex);
 
 	countryBorders.on('precompose', function (event) {
 		var ctx = event.context;
@@ -203,7 +207,7 @@ function addMapSwipe(map) {
 	}, false);
 }
 
-function addCountryBorderHighlight(map) {
+function addCountryBorderHighlight(map, cntrBdyIndex) {
 	var featureOverlay = new ol.FeatureOverlay({
 		map: map,
 		style: new ol.style.Style({
@@ -251,9 +255,9 @@ function addCountryBorderHighlight(map) {
 	$showBorders.prop('checked', true);
 	$showBorders.click(function () {
 		if ($showBorders.is(':checked')) {
-			map.getLayers().item(2).set('visible', true);
+			map.getLayers().item(cntrBdyIndex).set('visible', true);
 		} else {
-			map.getLayers().item(2).set('visible', false);
+			map.getLayers().item(cntrBdyIndex).set('visible', false);
 		}
 	});
 
@@ -265,24 +269,26 @@ function addCountryBorderHighlight(map) {
 	});
 }
 
-function addMinMaxSwitch(map, legendURL, minMax) {
-	var $useMinMax = $("#useMinMax");
-	$useMinMax.off("click");
-	$useMinMax.prop('checked', true);
-	$useMinMax.click(function () {
-		var params = map.getLayers().item(1).getSource().getParams();
-		var legendMinMax = "default";
+function addSwitchBgMap(map, bgMapsName){
+	var $bgMaps = $("input[name=" + bgMapsName + "]");
+	$bgMaps.filter('[value=map]').prop('checked', true);
 
-		if ($useMinMax.is(':checked')) {
-			params.COLORSCALERANGE = minMax;
-			legendMinMax = (minMax == "auto" ? "default" : minMax);
-		} else {
-			params.COLORSCALERANGE = 'auto';
-		}
+	if ($bgMaps.data("event") == null){
 
-		map.getLayers().item(1).getSource().updateParams(params);
-		setLegendSrc(legendURL, legendMinMax);
-	});
+		$bgMaps.change(function(){
+			var selectedValue = $bgMaps.filter(':checked').val();
+
+			if (selectedValue == "sat"){
+				map.getLayers().item(0).setVisible(false);
+				map.getLayers().item(1).setVisible(true);
+			} else if (selectedValue == "map"){
+				map.getLayers().item(0).setVisible(true);
+				map.getLayers().item(1).setVisible(false);
+			}
+		});
+	} else {
+		console.log("not null event");
+	}
 }
 
 function getLegendURL(serviceURL, layer, style){
@@ -304,18 +310,4 @@ function setLegendSrc(legendURL, layerMinMax) {
 function setExtent(bBox) {
 	//fitExtent is experimetal in version 3.5.0
 	map.getView().fitExtent(bBox, map.getSize());
-}
-
-function addMessage(msg, isErrorMsg) {
-	isErrorMsg = typeof isErrorMsg !== 'undefined' ? isErrorMsg : false;
-
-	if (isErrorMsg) {
-		var $errorMsg = $("<div class='error'>" + msg + "</div>");
-		$errorMsg.delay(7000).fadeOut("normal", function () {
-			$errorMsg.remove();
-		});
-		$("#messages").append($errorMsg);
-	} else {
-		$("#messages").append("<div>" + msg + "</div>");
-	}
 }

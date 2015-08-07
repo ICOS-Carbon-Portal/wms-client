@@ -1,4 +1,4 @@
-module.exports = function(elemId, CapabilitiesStore){
+module.exports = function(elemId, layerChosenAction){
 
 	var $ddl = $("#" + elemId);
 	var action = Reflux.createAction();
@@ -7,30 +7,61 @@ module.exports = function(elemId, CapabilitiesStore){
 	function trigger() {
 		action({
 			elevation: $ddl.val(),
-			capabilities: latestCapabilities
+			capabs: latestCapabilities
 		});
 	}
 
 	$ddl.change(trigger);
 
-	CapabilitiesStore.listen(function(capabilities){
+	layerChosenAction.listen(function(chosenLayer){
+		var capabs = chosenLayer.capabs;
+		var layer = chosenLayer.layer;
+
 		$ddl.find('option').remove().end();
 
-		capabilities.elevations.forEach(function (item) {
-			$ddl.append($("<option />").val(item).text(item));
-		});
+		if (capabs.layerHasElevation(layer)){
 
-		if (capabilities.elevations.length > 1){
+			capabs.elevations.forEach(function (item) {
+				$ddl.append($("<option />").val(item).text(item));
+			});
+
 			$("#elevationContainer").show();
+
+			if (isElevationValid(capabs.elevations, capabs.Services.query.e)){
+				$ddl.val(capabs.Services.query.e);
+			}
+
 		} else {
 			$("#elevationContainer").hide();
 		}
 
-		latestCapabilities = capabilities;
+		latestCapabilities = capabs;
 
 		trigger();
 	});
 
+	//layerChosenAction.listen(function(chosenLayer){
+	//	$ddl.find('option').remove().end();
+	//	console.log(chosenLayer);
+	//	if(chosenLayer.capabs.layerHasElevation(chosenLayer.layer)){
+	//		$("#elevationContainer").show();
+	//	} else {
+	//		$("#elevationContainer").hide();
+	//	}
+	//});
+
 	return {action: action};
 
+};
+
+function isElevationValid(elevationsArr, e){
+	var isValid = false;
+
+	elevationsArr.forEach(function (elevation){
+		if(elevation == e){
+			isValid = true;
+		}
+	});
+
+	return isValid;
 };

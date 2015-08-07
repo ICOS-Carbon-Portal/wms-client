@@ -12,23 +12,36 @@ module.exports = function(MinMaxStore, styleChosenAction){
 		},
 
 		updateReceived: function(update){
-			var capabs = this.mapState.capabilities;
+			var capabs = this.mapState.capabs;
 
-			if(!capabs || capabs.serviceUrl != update.capabilities.serviceUrl){
+			if(!capabs || capabs.serviceUrl != update.capabs.serviceUrl){
 				this.mapState = {};
 			}
 
 			var state = this.mapState;
-			$.extend(state, update);
+			Utils.extend(state, update);
 
 			var requiredProps = [
 				'style', 'min', 'max', 'layer',
-				'date', 'elevation', 'capabilities'
+				'date', 'elevation', 'capabs'
 			];
 
 			if(Utils.propertiesAreDefined(state, requiredProps)){
+				state.requestUrl = this.buildReqUrl(state);
 				this.trigger(state);
 			}
+		},
+
+		buildReqUrl: function(state){
+			var dataset = state.capabs.serviceUrl.replace(/^.*[\/]/, '');
+			var style = state.style.replace("boxfill/", "");
+			var url = "?serv=" + dataset;
+			url += "&v=" + state.layer;
+			url += "&s=" + style;
+			url += "&d=" + state.date;
+			url += "&e=" + (state.elevation == null ? "0" : state.elevation);
+
+			return url;
 		}
 
 	});

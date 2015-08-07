@@ -7,22 +7,38 @@ module.exports = function(elemId, CapabilitiesStore){
 	function trigger() {
 		action({
 			layer: $ddl.val(),
-			capabilities: latestCapabilities
+			capabs: latestCapabilities
 		});
 	}
 
 	$ddl.change(trigger);
 
-	CapabilitiesStore.listen(function(capabilities){
+	CapabilitiesStore.listen(function(capabs){
 		$ddl.find('option').remove().end();
 
-		capabilities.layers.forEach(function (item) {
+		capabs.layers.forEach(function (item) {
 			$ddl.append($("<option />").val(item.name).text(item.name + "  - " + item.abstract));
 		});
 
-		latestCapabilities = capabilities;
+		if (isVariableValid(capabs.layers, capabs.Services.query.v)){
+			$ddl.val(capabs.Services.query.v);
+		}
+
+		latestCapabilities = capabs;
 		trigger();
 	});
 
 	return {action: action};
+};
+
+function isVariableValid(layerClassArr, v){
+	var isValid = false;
+
+	layerClassArr.forEach(function (layer){
+		if(layer.name == v){
+			isValid = true;
+		}
+	});
+
+	return isValid;
 };

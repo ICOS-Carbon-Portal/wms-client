@@ -1,4 +1,4 @@
-module.exports = function(CapabilitiesStore, mapReadyAction){
+module.exports = function(CapabilitiesStore, mapReadyAction, animationPause){
 
 	var actions = Reflux.createActions([
 		"dateChosen", "nextDate", "previousDate", "playPause"
@@ -9,7 +9,8 @@ module.exports = function(CapabilitiesStore, mapReadyAction){
 		init: function(){
 			this.state = {
 				playing: false,
-				pause: 1000
+				sender: null,
+				pause: animationPause
 			};
 			this.listenTo(CapabilitiesStore, this.capabilitiesReceived);
 			this.listenTo(actions.dateChosen, this.dateChosenHandler);
@@ -20,7 +21,7 @@ module.exports = function(CapabilitiesStore, mapReadyAction){
 		},
 
 		capabilitiesReceived: function(capabilities){
-			this.state.capabilities = capabilities;
+			this.state.capabs = capabilities;
 			this.state.dates = capabilities.dates;
 			this.state.date = capabilities.dates[0];
 			this.state.dateIndex = 0;
@@ -40,6 +41,7 @@ module.exports = function(CapabilitiesStore, mapReadyAction){
 
 		previousDateHandler: function(){
 			var dates = this.state.dates;
+
 			if(dates && this.state.dateIndex > 0){
 				this.state.dateIndex--;
 				this.state.date = dates[this.state.dateIndex];
@@ -47,19 +49,25 @@ module.exports = function(CapabilitiesStore, mapReadyAction){
 			}
 		},
 
-		nextDateHandler: function(){
+		nextDateHandler: function(sender){
 			var dates = this.state.dates;
-			if(dates && this.state.dateIndex < dates.length){
+			this.state.sender = sender;
+
+			if (dates && this.state.dateIndex < dates.length - 1){
 				this.state.dateIndex++;
 				this.state.date = dates[this.state.dateIndex];
+				this.triggerIfReady();
+			} else {
+				this.state.playing = false;
 				this.triggerIfReady();
 			}
 		},
 
 		playPauseHandler: function(){
 			this.state.playing = !this.state.playing;
+
 			if(this.state.playing) {
-				this.nextDateHandler();
+				this.nextDateHandler("animate");
 			} else {
 				this.triggerIfReady();
 			}
@@ -73,12 +81,15 @@ module.exports = function(CapabilitiesStore, mapReadyAction){
 
 		playNext: function(){
 			if(this.state.playing){
-				this.nextDateHandler();
+				this.nextDateHandler("animate");
 			}
 		},
 
 		triggerIfReady: function(){
-			if(this.state.date && this.state.capabilities){
+			if(this.state.date && this.state.capabs){
+				this.trigger(this.state);
+			} else if (this.state.date == null && this.state.capabs){
+				this.state.playing = false;
 				this.trigger(this.state);
 			}
 		}

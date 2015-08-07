@@ -19,6 +19,12 @@ module.exports = {
 			var propVal = obj[prop];
 			return (typeof propVal !== 'undefined');
 		});
+	},
+
+	extend: function(master, slave){
+		for(p in slave){
+			master[p] = slave[p];
+		}
 	}
 
 };
