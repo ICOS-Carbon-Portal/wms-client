@@ -31,6 +31,12 @@ module.exports = function(elemId, ServiceStore, CapabilitiesStore){
 	return {action: action};
 };
 
+if (String.endsWith === undefined) {
+	String.prototype.endsWith = function (suffix) {
+		return this.indexOf(suffix, this.length - suffix.length) !== -1;
+	};
+}
+
 function isStyleValid(styleClassArr, s){
 	var isValid = false;
 
